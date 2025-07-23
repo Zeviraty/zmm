@@ -1,0 +1,59 @@
+body {
+  background-color: black;
+  color: #00ff00;
+  font-family: "Courier New", monospace;
+  padding: 20px;
+  white-space: pre;
+}
+
+* {
+  font-family: "Courier New", monospace;
+}
+a {
+  color: #00ff00;
+  font-size: 1em;
+  text-decoration: none;
+  margin: 0;
+  line-height: 1;
+  padding: 0;
+}
+
+a:hover {
+  color: black;
+  background-color: #00ff00;
+}
+
+.checkbox input {
+  display: none;
+}
+
+.checkbox span {
+  cursor: pointer;
+}
+
+.checkbox input:checked + span::before {
+  content: "[x]";
+}
+
+.checkbox input:not(:checked) + span::before {
+  content: "[ ]";
+}
+
+input[type="submit"] {
+  background: none;
+  border: none;
+  color: #00ff00;
+  font-family: "Courier New", monospace;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+  font-size: 1em;
+  line-height: 1;
+  font-weight: normal;
+}
+
+input[type="submit"]:hover {
+  color: black;
+  background-color: #00ff00;
+}
