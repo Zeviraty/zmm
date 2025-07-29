@@ -57,3 +57,31 @@ input[type="submit"]:hover {
   color: black;
   background-color: #00ff00;
 }
+
+input[type="text"] {
+  background: transparent;
+  border: none;
+  color: #00ff00;
+  font-family: "Courier New", monospace;
+  font-size: 1em;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: content-box;
+}
+
+input[type="text"]::placeholder {
+  color: #004400;
+}
+
+p {
+  text-wrap: wrap;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.md {
+  white-space: normal;
+}

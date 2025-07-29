@@ -3,6 +3,30 @@ import threading
 from typing import Callable, Literal
 import json
 
+def unquote_plus_custom(s):
+    result = ""
+    i = 0
+    while i < len(s):
+        if s[i] == '%':
+            if i + 2 < len(s):
+                hex_val = s[i+1:i+3]
+                try:
+                    result += chr(int(hex_val, 16))
+                    i += 3
+                except ValueError:
+                    result += '%'
+                    i += 1
+            else:
+                result += '%'
+                i += 1
+        elif s[i] == '+':
+            result += ' '
+            i += 1
+        else:
+            result += s[i]
+            i += 1
+    return result
+
 MatchStrategy = Literal["exact", "startswith", "endswith", "contains"]
 
 class Route:
@@ -15,6 +39,8 @@ class Route:
 
     def matches(self, input_path: str) -> bool:
         '''Check if a path matches the defined route'''
+        if input_path.endswith("/") and input_path != "/":
+            input_path = input_path[:-1]
         if self.matching == "exact":
             return input_path == self.path
         elif self.matching == "startswith":
@@ -40,12 +66,6 @@ def response(status:str = "200 OK", content:str = "", content_type:str = "", nos
         end = ""
     return f"HTTP/1.1 {status}\r\n{end}".encode()
 
-def rls(x: str):
-    '''Remove left spaces'''
-    for idx, i in enumerate(x):
-        if i != " ": break
-    return x[idx:]
-
 class Server():
     def __init__(self, fileshare = False):
         self.bound_paths: list[Route] = []
@@ -68,12 +88,19 @@ class Server():
             buffer = connection.recv(1024)
             try:
                 data = self.parse_request(buffer)
-            except:
+            except Exception as e:
+                print(e)
                 connection.send(response("400 BAD REQUEST","Bad request"))
                 continue
+            
             if data["method"] == "POST" and "body" not in data.keys():
-                buffer = connection.recv(1024)
-                data["body"] = self.parse_body(buffer, data["headers"]["content-type"])
+                self.sock.settimeout(1.0)
+                try:
+                    buffer = connection.recv(1024)
+                    data["body"] = self.parse_body(buffer, data["headers"]["content-type"])
+                except socket.timeout:
+                    data["body"] = {}
+                self.sock.settimeout(None)
 
             found = False
 
@@ -123,11 +150,11 @@ class Server():
                         state = "body"
                         continue
                     colon_split = i.split(":")
-                    headers[rls(colon_split[0].lower())] = rls(":".join(colon_split[1:]))
+                    headers[colon_split[0].lower().lstrip()] = ":".join(colon_split[1:]).lstrip()
                 case "body":
                     if i == "":
                         break
-                    body += self.parse_body(("\r\n".join(buffer.decode().split("\r\n")[idx:])).encode(),headers["content-type"])
+                    body.update(self.parse_body(("\r\n".join(buffer.decode().split("\r\n")[idx:])).encode(),headers["content-type"]))
 
         data = {'method':method, 'path':path, 'version':version, 'headers':headers}
         if body != {}:
@@ -141,7 +168,7 @@ class Server():
         if content_parameters != None:
             tmp = {}
             for i in content_parameters:
-                tmp[rls(i.split("=")[0])] = rls("=".join(i.split("=")[1:]))
+                tmp[i.split("=")[0].lstrip()] = "=".join(i.split("=")[1:]).lstrip()
             content_parameters = tmp
         
         content_type = content_type.split(";")[0]
@@ -150,13 +177,14 @@ class Server():
         match content_type:
             case "inlink":
                 for i in buffer.split("?")[-1].split("&"):
-                    key = i.split("=")[0]
-                    value = "=".join(i.split("=")[1:])
-                    body[key] = value
+                    if "=" in i:
+                        key = unquote_plus_custom(i.split("=")[0])
+                        value = unquote_plus_custom("=".join(i.split("=")[1:]))
+                        body[key] = value
             case "application/x-www-form-urlencoded":
                 for i in buffer.decode().split("&"):
-                    key = i.split("=")[0]
-                    value = "=".join(i.split("=")[1:])
+                    key = unquote_plus_custom(i.split("=")[0])
+                    value = unquote_plus_custom("=".join(i.split("=")[1:]))
                     body[key] = value
             case "application/json":
                 try:

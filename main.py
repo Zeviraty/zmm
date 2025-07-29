@@ -2,6 +2,10 @@ from zws import Server, response
 from random import choice
 import json
 import os
+import importlib.util
+
+global modules
+modules = []
 
 banners = [
         "====================================\nd88888P   88bd8b,d88b   88bd8b,d88b \n   d8P'   88P'`?8P'?8b  88P'`?8P'?8b\n d8P'    d88  d88  88P d88  d88  88P\nd88888P'd88' d88'  88bd88' d88'  88b\n====================================",
@@ -38,7 +42,7 @@ def build_page(page_content,script="",boot=True):
     content = ""
     content += "<!DOCTYPE html>\n"
     content += "<html>\n"
-    content += "<head> <link rel='stylesheet' href='style.css'> <meta charset='UTF-8'> </head>\n"
+    content += "<head> <link rel='stylesheet' href='/style.css'> <meta charset='UTF-8'> </head>\n"
 
     content += "<body>\n"
 
@@ -58,10 +62,27 @@ def build_page(page_content,script="",boot=True):
 
     return content
 
+def load_modules(module_dir="modules"):
+    global modules
+    for filename in os.listdir(module_dir):
+        if filename.endswith(".py") and not filename.startswith("__"):
+            path = os.path.join(module_dir, filename)
+            name = filename[:-3]
+            spec = importlib.util.spec_from_file_location(name, path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            if hasattr(module, "register"):
+                modules.append(module.register())
+
 def index(connection,data):
-    options = ["settings"]
+    options = []
+    global modules
+    for i in modules:
+        options.append(i.main_page)
+    options.sort()
+    options.append("settings")
     page_content = ""
-    for i in options: page_content += f"<a href='{i}'><b># {i}</b></a>\n"
+    for i in options: page_content += f"<a href='{i}'># {i}</a>\n"
     content = build_page(page_content,boot=True)
     connection.send(response("200 OK", content, content_type="text/html"))
 
@@ -90,12 +111,20 @@ def settings_page(connection,data):
     connection.send(response("200 OK", content,content_type="text/html"))
 
 def main():
+
+    load_modules()
+    
     server = Server()
     server.start("0.0.0.0",8080)
 
     if not os.path.exists("config/zmm.json"):
         settings = {"boot_message": True,"banner":True}
         open("config/zmm.json",'w').write(json.dumps(settings))
+
+    global modules
+    for i in modules:
+        for k,v in i.pages.items():
+            server.bind_path(k,v[0] if type(v) == list else v, v[1] if type(v) == list else "exact")
 
     server.bind_path("/",index)
     server.bind_path("/settings",settings_page)
