@@ -112,7 +112,6 @@ def settings_page(connection,data):
 
 def main():
 
-    load_modules()
     
     server = Server()
     server.start("0.0.0.0",8080)
@@ -123,6 +122,8 @@ def main():
     if not os.path.exists("config/zmm.json"):
         settings = {"boot_message": True,"banner":True}
         open("config/zmm.json",'w').write(json.dumps(settings))
+
+    load_modules()
 
     global modules
     for i in modules:
