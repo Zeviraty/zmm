@@ -99,7 +99,7 @@ def settings_page(connection,data):
         json.dump(settings,open("config/zmm.json",'w'))
     settings = json.load(open("config/zmm.json"))
     content = "=== Settings ===\n\n"
-    content += '<form action="/settings">'
+    content += '<form action="/settings" method="post">'
     for k,v in settings.items():
         match type(v):
             case bool:
@@ -111,8 +111,6 @@ def settings_page(connection,data):
     connection.send(response("200 OK", content,content_type="text/html"))
 
 def main():
-
-    
     server = Server()
     server.start("0.0.0.0",8080)
 
