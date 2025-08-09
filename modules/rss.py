@@ -143,7 +143,7 @@ class RSS():
             con.commit()
             con.close()
                 
-        except KeyboardInterrupt as e:
+        except Exception as e:
             print("Error while parsing feed:")
             print(e)
 
