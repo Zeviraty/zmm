@@ -11,6 +11,8 @@ body {
 }
 a {
   color: #00ff00;
+  background-color: #000000;
+  border: none;
   font-size: 1em;
   text-decoration: none;
   margin: 0;
@@ -22,6 +24,24 @@ a:hover {
   color: black;
   background-color: #00ff00;
 }
+
+button {
+  color: #00ff00;
+  background-color: #000000;
+  border: none;
+  font-size: 1em;
+  text-decoration: none;
+  margin: 0;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:hover {
+  color: #000000;
+  background-color: #00ff00;
+}
+
 
 .checkbox input {
   display: none;
